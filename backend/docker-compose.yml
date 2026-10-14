@@ -1,0 +1,125 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wager-postgres
+    environment:
+      POSTGRES_USER: wager
+      POSTGRES_PASSWORD: wager123
+      POSTGRES_DB: wager_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wager -d wager_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: wager-localstack
+    environment:
+      SERVICES: sqs
+      DEBUG: 0
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - ./scripts/localstack-init.sh:/etc/localstack/init/ready.d/init-aws.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "awslocal sqs list-queues"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wager-app
+    environment:
+      NODE_ENV: development
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: wager
+      DATABASE_PASSWORD: wager123
+      DATABASE_NAME: wager_db
+      SQS_ENDPOINT: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Additional app instances for concurrency testing
+  app-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wager-app-2
+    environment:
+      NODE_ENV: development
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: wager
+      DATABASE_PASSWORD: wager123
+      DATABASE_NAME: wager_db
+      SQS_ENDPOINT: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      INSTANCE_ID: instance-2
+    ports:
+      - "3001:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    profiles:
+      - multi-instance
+    restart: unless-stopped
+
+  app-3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wager-app-3
+    environment:
+      NODE_ENV: development
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: wager
+      DATABASE_PASSWORD: wager123
+      DATABASE_NAME: wager_db
+      SQS_ENDPOINT: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      INSTANCE_ID: instance-3
+    ports:
+      - "3002:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    profiles:
+      - multi-instance
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  localstack_data:
