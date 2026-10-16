@@ -10,6 +10,10 @@ import {
 import { OutboxMessage } from "../../domain/entities/outbox-message";
 import { Money } from "../../domain/value-objects/money";
 import {
+  LedgerDirection,
+  WalletLedgerEntry,
+} from "../../domain/entities/wallet-ledger-entry";
+import {
   WalletCreated,
   WalletBalanceChanged,
   EventContext,
@@ -83,6 +87,29 @@ export class WalletService {
 
       await walletRepo.save(wallet);
       await em.flush();
+
+      if (!input.initialBalance.isZero()) {
+        const openingTransaction = WagerTransaction.createOpening(
+          uuidv4(),
+          wallet.id,
+          wallet.playerId,
+          input.initialBalance,
+        );
+        const openingEntry = WalletLedgerEntry.create({
+          id: uuidv4(),
+          walletId: wallet.id,
+          transactionId: openingTransaction.id,
+          direction: LedgerDirection.Credit,
+          money: input.initialBalance,
+          balanceBefore: Money.zero(input.initialBalance.currency),
+          balanceAfter: input.initialBalance,
+        });
+
+        await transactionRepo.save(openingTransaction);
+        await em.flush();
+        await ledgerRepo.save(openingEntry);
+        await em.flush();
+      }
 
       // Emit wallet created event
       const createdEvent = WalletCreated.from(wallet, eventContext);

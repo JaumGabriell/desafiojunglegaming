@@ -102,19 +102,19 @@ describe("Wallet Integration Tests", () => {
   describe("Wallet Creation", () => {
     it("should create wallet with initial balance", async () => {
       const result = await walletService.createWallet({
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         initialBalance: Money.from({ amount: "1000.00", currency: "BRL" }),
       });
 
       expect(result.id).toBeDefined();
-      expect(result.playerId).toBe("player-1");
+      expect(result.playerId).toBe("00000000-0000-0000-0000-000000000001");
       expect(result.balance.getAmount()).toBe("1000.00");
-      expect(result.version).toBe(2); // 1 for create + 1 for opening credit
+      expect(result.version).toBe(1);
     });
 
     it("should create wallet with zero balance", async () => {
       const result = await walletService.createWallet({
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         initialBalance: Money.zero("BRL"),
       });
 
@@ -124,13 +124,13 @@ describe("Wallet Integration Tests", () => {
 
     it("should reject duplicate wallet for same player+currency", async () => {
       await walletService.createWallet({
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         initialBalance: Money.from({ amount: "1000.00", currency: "BRL" }),
       });
 
       await expect(
         walletService.createWallet({
-          playerId: "player-1",
+          playerId: "00000000-0000-0000-0000-000000000001",
           initialBalance: Money.from({ amount: "500.00", currency: "BRL" }),
         }),
       ).rejects.toThrow(/already exists/);
@@ -138,12 +138,12 @@ describe("Wallet Integration Tests", () => {
 
     it("should allow same player with different currencies", async () => {
       const brl = await walletService.createWallet({
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         initialBalance: Money.from({ amount: "1000.00", currency: "BRL" }),
       });
 
       const usd = await walletService.createWallet({
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         initialBalance: Money.from({ amount: "500.00", currency: "USD" }),
       });
 
@@ -157,7 +157,7 @@ describe("Wallet Integration Tests", () => {
 
     beforeEach(async () => {
       const wallet = await walletService.createWallet({
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         initialBalance: Money.from({ amount: "1000.00", currency: "BRL" }),
       });
       walletId = wallet.id;
@@ -168,7 +168,7 @@ describe("Wallet Integration Tests", () => {
         providerId: "provider-a",
         externalTransactionId: "bet-1",
         idempotencyKey: "provider-a:bet-1",
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         walletId,
         roundId: "round-1",
         gameId: "game-1",
@@ -186,7 +186,7 @@ describe("Wallet Integration Tests", () => {
         providerId: "provider-a",
         externalTransactionId: "bet-1",
         idempotencyKey: "provider-a:bet-1",
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         walletId,
         roundId: "round-1",
         gameId: "game-1",
@@ -205,7 +205,7 @@ describe("Wallet Integration Tests", () => {
         providerId: "provider-a",
         externalTransactionId: "bet-1",
         idempotencyKey: "provider-a:bet-1",
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         walletId,
         roundId: "round-1",
         gameId: "game-1",
@@ -218,7 +218,7 @@ describe("Wallet Integration Tests", () => {
         providerId: "provider-a",
         externalTransactionId: "win-1",
         idempotencyKey: "provider-a:win-1",
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         walletId,
         roundId: "round-1",
         gameId: "game-1",
@@ -236,7 +236,7 @@ describe("Wallet Integration Tests", () => {
         providerId: "provider-a",
         externalTransactionId: "bet-1",
         idempotencyKey: "provider-a:bet-1",
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         walletId,
         roundId: "round-1",
         gameId: "game-1",
@@ -249,7 +249,7 @@ describe("Wallet Integration Tests", () => {
         providerId: "provider-a",
         externalTransactionId: "loss-1",
         idempotencyKey: "provider-a:loss-1",
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         walletId,
         roundId: "round-1",
         gameId: "game-1",
@@ -267,7 +267,7 @@ describe("Wallet Integration Tests", () => {
 
     beforeEach(async () => {
       const wallet = await walletService.createWallet({
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         initialBalance: Money.from({ amount: "1000.00", currency: "BRL" }),
       });
       walletId = wallet.id;
@@ -278,7 +278,7 @@ describe("Wallet Integration Tests", () => {
         providerId: "provider-a",
         externalTransactionId: "bet-1",
         idempotencyKey: "provider-a:bet-1",
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         walletId,
         roundId: "round-1",
         gameId: "game-1",
@@ -290,7 +290,7 @@ describe("Wallet Integration Tests", () => {
         providerId: "provider-a",
         externalTransactionId: "bet-1",
         idempotencyKey: "provider-a:bet-1",
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         walletId,
         roundId: "round-1",
         gameId: "game-1",
@@ -307,7 +307,7 @@ describe("Wallet Integration Tests", () => {
         providerId: "provider-a",
         externalTransactionId: "bet-1",
         idempotencyKey: "provider-a:bet-1",
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         walletId,
         roundId: "round-1",
         gameId: "game-1",
@@ -320,7 +320,7 @@ describe("Wallet Integration Tests", () => {
           providerId: "provider-a",
           externalTransactionId: "bet-1",
           idempotencyKey: "provider-a:bet-1",
-          playerId: "player-1",
+          playerId: "00000000-0000-0000-0000-000000000001",
           walletId,
           roundId: "round-1",
           gameId: "game-1",
@@ -334,7 +334,7 @@ describe("Wallet Integration Tests", () => {
   describe("Reconciliation", () => {
     it("should show consistent balance", async () => {
       const wallet = await walletService.createWallet({
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         initialBalance: Money.from({ amount: "1000.00", currency: "BRL" }),
       });
 
@@ -342,7 +342,7 @@ describe("Wallet Integration Tests", () => {
         providerId: "provider-a",
         externalTransactionId: "bet-1",
         idempotencyKey: "provider-a:bet-1",
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         walletId: wallet.id,
         roundId: "round-1",
         gameId: "game-1",

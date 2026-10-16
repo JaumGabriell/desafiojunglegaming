@@ -38,6 +38,8 @@ import { InboxMessageEntity } from "../../src/infrastructure/database/entities/i
 import { OutboxMessageEntity } from "../../src/infrastructure/database/entities/outbox-message.entity";
 
 describe("Concurrency Tests", () => {
+  const playerIdForIndex = (index: number) =>
+    `00000000-0000-0000-0000-${String(index).padStart(12, "0")}`;
   let module: TestingModule;
   let orm: MikroORM;
   let em: EntityManager;
@@ -104,7 +106,7 @@ describe("Concurrency Tests", () => {
     it("should process only one of two 80 BRL bets on 100 BRL balance", async () => {
       // Create wallet with 100 BRL
       const wallet = await walletService.createWallet({
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         initialBalance: Money.from({ amount: "100.00", currency: "BRL" }),
       });
 
@@ -114,7 +116,7 @@ describe("Concurrency Tests", () => {
           providerId: "provider-a",
           externalTransactionId: "bet-1",
           idempotencyKey: "provider-a:bet-1",
-          playerId: "player-1",
+          playerId: "00000000-0000-0000-0000-000000000001",
           walletId: wallet.id,
           roundId: "round-1",
           gameId: "game-1",
@@ -125,7 +127,7 @@ describe("Concurrency Tests", () => {
           providerId: "provider-a",
           externalTransactionId: "bet-2",
           idempotencyKey: "provider-a:bet-2",
-          playerId: "player-1",
+          playerId: "00000000-0000-0000-0000-000000000001",
           walletId: wallet.id,
           roundId: "round-1",
           gameId: "game-1",
@@ -162,7 +164,7 @@ describe("Concurrency Tests", () => {
   describe("Same Transaction 50 Times Parallel", () => {
     it("should only create one debit when same bet sent 50 times", async () => {
       const wallet = await walletService.createWallet({
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         initialBalance: Money.from({ amount: "1000.00", currency: "BRL" }),
       });
 
@@ -172,7 +174,7 @@ describe("Concurrency Tests", () => {
           providerId: "provider-a",
           externalTransactionId: "bet-1",
           idempotencyKey: "provider-a:bet-1",
-          playerId: "player-1",
+          playerId: "00000000-0000-0000-0000-000000000001",
           walletId: wallet.id,
           roundId: "round-1",
           gameId: "game-1",
@@ -210,7 +212,7 @@ describe("Concurrency Tests", () => {
       const wallets = await Promise.all(
         Array.from({ length: 10 }, (_, i) =>
           walletService.createWallet({
-            playerId: `player-${i}`,
+            playerId: playerIdForIndex(i + 2),
             initialBalance: Money.from({ amount: "1000.00", currency: "BRL" }),
           }),
         ),
@@ -223,7 +225,7 @@ describe("Concurrency Tests", () => {
             providerId: "provider-a",
             externalTransactionId: `bet-${i}`,
             idempotencyKey: `provider-a:bet-${i}`,
-            playerId: `player-${i}`,
+            playerId: playerIdForIndex(i + 2),
             walletId: w.id,
             roundId: "round-1",
             gameId: "game-1",
@@ -249,7 +251,7 @@ describe("Concurrency Tests", () => {
   describe("Reconciliation Invariant", () => {
     it("should maintain balance = ledger sum after concurrent operations", async () => {
       const wallet = await walletService.createWallet({
-        playerId: "player-1",
+        playerId: "00000000-0000-0000-0000-000000000001",
         initialBalance: Money.from({ amount: "10000.00", currency: "BRL" }),
       });
 
@@ -268,7 +270,7 @@ describe("Concurrency Tests", () => {
                 providerId: "provider-a",
                 externalTransactionId: op.id,
                 idempotencyKey: `provider-a:${op.id}`,
-                playerId: "player-1",
+                playerId: "00000000-0000-0000-0000-000000000001",
                 walletId: wallet.id,
                 roundId: "round-1",
                 gameId: "game-1",

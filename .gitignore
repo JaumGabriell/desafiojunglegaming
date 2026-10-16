@@ -1,0 +1,27 @@
+# Dependencias
+node_modules/
+backend/node_modules/
+
+# Build e cobertura
+dist/
+backend/dist/
+coverage/
+backend/coverage/
+
+# Ambiente e segredos locais
+.env
+backend/.env
+!.env.example
+
+# Arquivos temporarios e logs
+tmp/
+temp/
+*.log
+npm-debug.log*
+bun-debug.log*
+
+# IDE e sistema operacional
+.vscode/
+.idea/
+*.swp
+.DS_Store
