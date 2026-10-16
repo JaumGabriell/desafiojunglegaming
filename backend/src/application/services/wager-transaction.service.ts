@@ -126,6 +126,27 @@ export class WagerTransactionService {
           }
         });
       } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes("idempotency_key")
+        ) {
+          const existingTx = await this.transactionRepo.findByIdempotencyKey(
+            input.idempotencyKey,
+          );
+          if (existingTx) {
+            if (!existingTx.matchesPayload(payloadHash)) {
+              throw new IdempotencyConflictError(input.idempotencyKey);
+            }
+            const wallet = await this.walletRepo.findById(existingTx.walletId);
+            return {
+              transactionId: existingTx.id,
+              status: existingTx.status,
+              balance: wallet?.balance ?? Money.zero(input.money.currency),
+              idempotentReplay: true,
+              failureCode: existingTx.failureCode,
+            };
+          }
+        }
         if (error instanceof ConcurrencyConflictError) {
           lastError = error;
           await this.sleep(RETRY_DELAY_BASE_MS * Math.pow(2, attempt));
@@ -184,6 +205,21 @@ export class WagerTransactionService {
     const wallet = await walletRepo.findById(input.walletId, true);
     if (!wallet) {
       throw new WalletNotFoundError(input.walletId);
+    }
+
+    const transactionAlreadyProcessed =
+      await transactionRepo.findByIdempotencyKey(input.idempotencyKey);
+    if (transactionAlreadyProcessed) {
+      if (!transactionAlreadyProcessed.matchesPayload(payloadHash)) {
+        throw new IdempotencyConflictError(input.idempotencyKey);
+      }
+      return {
+        transactionId: transactionAlreadyProcessed.id,
+        status: transactionAlreadyProcessed.status,
+        balance: wallet.balance,
+        idempotentReplay: true,
+        failureCode: transactionAlreadyProcessed.failureCode,
+      };
     }
 
     // Validate wallet context
@@ -300,7 +336,6 @@ export class WagerTransactionService {
 
       case WagerTransactionKind.Loss:
         // LOSS doesn't affect balance
-        transaction.markProcessed(undefined, new Date());
         break;
 
       case WagerTransactionKind.Refund:

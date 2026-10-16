@@ -37,7 +37,7 @@ export class WalletEntity {
   })
   balanceAmount!: string;
 
-  @Property({ type: "int", version: true })
+  @Property({ type: "int" })
   version!: number;
 
   @Property({ type: "timestamptz", fieldName: "created_at" })
